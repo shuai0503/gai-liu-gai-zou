@@ -1,0 +1,35 @@
+# ============================================================
+# Netlify 部署配置
+# ------------------------------------------------------------
+# 作用：让 Netlify 能跑现有的 Vercel 风格 Serverless 函数。
+#
+# 关键点：
+#   1. 静态文件在 public/，直接托管
+#   2. /api/* 请求转给 netlify/functions/api.js
+#   3. 那个函数是「适配器」，内部调用你现有的 api/*.js，
+#      所以原有代码一行都不用改
+# ============================================================
+
+[build]
+  # 没有构建步骤，纯静态 + 函数
+  command = ""
+  publish = "public"
+  functions = "netlify/functions"
+
+[[redirects]]
+  # 根路径 → 首页
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  # API 全部转给函数适配器（200 是内部转发，浏览器地址栏不变）
+  from = "/api/*"
+  to = "/.netlify/functions/api"
+  status = 200
+
+[[redirects]]
+  # 其余路径交给静态文件，找不到就回首页
+  from = "/*"
+  to = "/index.html"
+  status = 200
