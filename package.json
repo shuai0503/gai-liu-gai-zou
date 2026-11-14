@@ -1,0 +1,18 @@
+{
+  "name": "gai-liu-gai-zou-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "「该留该走」服务端代理：图片 → 视觉模型 → 规则表 → 文本模型，两段式调用，API Key 不出服务端。",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "test": "node test/run.js",
+    "sync-rules": "node scripts/sync-rules.mjs",
+    "sync-rules:check": "node scripts/sync-rules.mjs --check",
+    "dev": "vercel dev"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

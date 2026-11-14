@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#ffffff">
+<title>该留该走</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    color:#111827;background:#fff;
+    /* 支付宝/微信 WebView 里的橡皮筋与滚动穿透问题 */
+    overscroll-behavior:none;
+  }
+  #app{height:100%;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+  .view{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+  .view.on{display:flex}
+  .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;min-height:0}
+  .scroll::-webkit-scrollbar{display:none}
+
+  .ph{background:linear-gradient(140deg,#F1F4F8,#E3E8F0);display:flex;align-items:center;
+      justify-content:center;color:#A6AFBC;font-size:10px;letter-spacing:1.5px}
+  .btn{
+    height:56px;border-radius:10px;background:#1F6FEB;color:#fff;font-size:16px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;letter-spacing:.2px;cursor:pointer;
+    border:none;width:100%;font-family:inherit;transition:background .12s;
+  }
+  .btn:active{background:#1A5FCC}
+  .btn[disabled]{background:#A9C2E8;pointer-events:none}
+  .btn-ghost{
+    height:50px;border-radius:10px;background:#fff;color:#1F6FEB;border:1px solid #D7E3F7;
+    font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;width:100%;font-family:inherit;transition:background .12s;
+  }
+  .btn-ghost:active{background:#F5F9FF}
+  .sec{padding:22px 20px 0}
+  .sec .label{font-size:11px;color:#9CA3AF;letter-spacing:.6px;margin-bottom:11px}
+
+  /* ---------- S0 ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 14px) 20px 0}
+  .topbar .t{font-size:15px;font-weight:700;letter-spacing:-.2px}
+  .topbar .r{font-size:12px;color:#6B7280;cursor:pointer;padding:4px}
+  .hero{padding:44px 20px 0}
+  .hero h2{font-size:34px;line-height:1.28;font-weight:800;letter-spacing:-1px}
+  .hero p{font-size:15px;line-height:1.65;color:#6B7280;margin-top:14px}
+  .cta{margin:36px 20px 0}
+  .micro{text-align:center;font-size:12px;color:#9CA3AF;margin-top:12px}
+  .recsep{height:1px;background:#F3F4F6;margin:30px 20px 0}
+  .rec{padding:18px 20px 0}
+  .rec .h{font-size:12px;color:#9CA3AF;margin-bottom:8px;letter-spacing:.4px}
+  .recrow{display:flex;align-items:center;gap:12px;padding:10px 0;cursor:pointer;border-radius:8px}
+  .recrow:active{background:#FAFBFC}
+  .recrow .thumb{width:44px;height:44px;border-radius:8px;flex:none;overflow:hidden}
+  .recrow .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .recrow .nm{flex:1;font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .recrow .tg{font-size:12px;font-weight:600;flex:none}
+  .recrow .ar{color:#D1D5DB;font-size:15px;flex:none}
+
+  .empty{padding:18px 20px 0}
+  .empty .eh{font-size:12px;color:#9CA3AF;letter-spacing:.4px;margin-bottom:6px}
+  .empty .erow{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid #F6F7F8;font-size:13px;
+               color:#4B5563;line-height:1.65}
+  .empty .erow:last-child{border:none}
+  .empty .erow b{color:#C4C9D1;font-weight:700;font-size:11px;padding-top:2px;flex:none}
+  .empty .erow em{font-style:normal;color:#111827;font-weight:600}
+
+  .foot{padding:16px 20px calc(env(safe-area-inset-bottom) + 20px);font-size:11px;color:#B0B6BF;
+        text-align:center;line-height:1.6}
+
+  /* ---------- S1 ---------- */
+  .loading{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 40px}
+  .loading .pic{width:200px;height:200px;border-radius:14px;overflow:hidden;
+                animation:breathe 2s ease-in-out infinite}
+  .loading .pic img{width:100%;height:100%;object-fit:cover;display:block}
+  @keyframes breathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.025);opacity:.86}}
+  .loading .txt{font-size:15px;margin-top:36px;text-align:center;transition:opacity .2s;min-height:22px}
+  .dots{display:flex;gap:8px;margin-top:18px}
+  .dots i{width:7px;height:7px;border-radius:50%;background:#DDE1E7;transition:background .25s}
+  .dots i.on{background:#1F6FEB}
+  .loading .cancel{margin-top:auto;margin-bottom:calc(env(safe-area-inset-bottom) + 56px);
+                   font-size:13px;color:#9CA3AF;cursor:pointer;padding:12px 20px}
+  .slowhint{font-size:12px;color:#B0B6BF;margin-top:14px;height:16px}
+
+  /* ---------- S2 ---------- */
+  .rback{display:flex;align-items:center;height:46px;padding:calc(env(safe-area-inset-top) + 4px) 20px 0;
+         font-size:14px;color:#374151;flex:none;cursor:pointer;gap:6px}
+  .rback:active{background:#FBFCFD}
+  .fact{display:flex;gap:14px;align-items:flex-start;padding:12px 20px 18px}
+  .fact .thumb{width:72px;height:72px;border-radius:12px;flex:none;overflow:hidden}
+  .fact .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .fact .k{font-size:11px;color:#9CA3AF;letter-spacing:.4px}
+  .fact .v{font-size:17px;font-weight:700;margin-top:5px;letter-spacing:-.2px;line-height:1.35}
+
+  /* ---- 可编辑字段 ---- */
+  .editable{
+    display:inline-flex;align-items:center;gap:5px;border-radius:7px;
+    padding:1px 6px 2px 3px;margin-left:-3px;cursor:pointer;
+    border:1px dashed transparent;transition:all .12s;
+  }
+  .editable:hover{background:#F6F8FB;border-color:#D7E3F7}
+  .editable:active{background:#EFF4FB}
+  .editable .pen{
+    width:13px;height:13px;opacity:0;transition:opacity .12s;flex:none;
+    color:#9CA3AF;
+  }
+  .editable:hover .pen,.editable:active .pen{opacity:1}
+  .editable.empty{color:#B0B6BF;font-weight:500;font-size:13px;border-color:#E5E8EC}
+  .editable.empty .pen{opacity:.6}
+  .editHint{font-size:11px;color:#C4C9D1;margin-top:7px}
+  .editHint b{color:#9CA3AF;font-weight:500}
+
+  /* ---- 品牌档位选择 ---- */
+  .tierWrap{margin-top:11px}
+  .tierLabel{font-size:11px;color:#9CA3AF;letter-spacing:.4px;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+  .tierLabel .q{
+    width:13px;height:13px;border-radius:50%;background:#EEF1F5;color:#8C97A6;
+    font-size:9px;display:inline-flex;align-items:center;justify-content:center;
+    font-weight:700;cursor:help;
+  }
+  .tiers{display:flex;gap:6px}
+  .tier{
+    flex:1;text-align:center;font-size:12px;font-weight:500;color:#5B6673;
+    background:#F5F7FA;border:1px solid transparent;border-radius:8px;
+    padding:7px 4px;cursor:pointer;transition:all .12s;line-height:1.3;
+  }
+  .tier:active{background:#EBF1FA}
+  .tier.on{background:#EAF2FF;border-color:#B9D2F5;color:#1F6FEB;font-weight:700}
+  .tier .sub{display:block;font-size:9.5px;font-weight:400;color:#9AA4B2;margin-top:2px}
+  .tier.on .sub{color:#5B96E8}
+  .tierNote{font-size:11px;color:#9CA3AF;margin-top:7px;line-height:1.5}
+
+  /* ---- 重查价格提示条 ---- */
+  .recat-banner{
+    display:none;margin:0 20px 2px;padding:9px 13px;border-radius:9px;
+    font-size:12.5px;line-height:1.55;
+  }
+  .recat-banner.on{display:block}
+  .recat-banner.pending{background:#F3F6FB;color:#5B6B84}
+  .recat-banner.ok{background:#F0FAF5;color:#177A55;border:1px solid #CBEBDC}
+  .recat-banner.warn{background:#FFF9EC;color:#8A6A16;border:1px solid #F5E5C0}
+
+  .verdict{margin:0 20px;border-radius:12px;padding:17px 18px 18px 20px;
+           border-left:6px solid #0E9F6E;background:#F5FBF8}
+  .verdict.keep{border-left-color:#6B7280;background:#F7F8F9}
+  .verdict.sell{border-left-color:#0E9F6E;background:#F5FBF8}
+  .verdict.donate{border-left-color:#2563EB;background:#F5F9FF}
+  .verdict.recycle{border-left-color:#B45309;background:#FDF9F4}
+  .verdict .hd{display:flex;align-items:center;gap:9px}
+  .verdict .dot{width:9px;height:9px;border-radius:50%;flex:none;background:#0E9F6E}
+  .verdict.keep .dot{background:#6B7280}
+  .verdict.sell .dot{background:#0E9F6E}
+  .verdict.donate .dot{background:#2563EB}
+  .verdict.recycle .dot{background:#B45309}
+  .verdict h3{font-size:23px;font-weight:800;letter-spacing:-.5px}
+  .verdict p{font-size:13.5px;color:#4B5563;margin-top:8px;line-height:1.55;padding-left:18px}
+
+  .price{font-size:29px;font-weight:800;letter-spacing:-1px;color:#0E9F6E}
+  .price small{font-size:11px;font-weight:400;color:#9CA3AF;letter-spacing:0;display:block;
+               margin-top:6px;line-height:1.5}
+  .chan .cn{font-size:15px;font-weight:700}
+  .chan .cd{font-size:12.5px;color:#6B7280;margin-top:4px;line-height:1.55}
+  .chan+.chan{margin-top:13px}
+  .plain{font-size:13.5px;color:#4B5563;line-height:1.7}
+
+  .tipbox{margin:16px 20px 0;background:#FFFBEB;border:1px solid #F6E6B8;border-radius:10px;
+          padding:11px 14px;font-size:12.5px;color:#8A6A16;line-height:1.6}
+  .warnbox{margin:16px 20px 0;background:#FEF6F5;border:1px solid #F5D9D6;border-radius:10px;
+           padding:11px 14px;font-size:12.5px;color:#9B3D33;line-height:1.6}
+
+  .copyhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .copyhead .label{margin:0}
+  .copybtn{font-size:12px;font-weight:600;color:#1F6FEB;border:1px solid #D7E3F7;border-radius:7px;
+           padding:5px 12px;cursor:pointer;background:#fff;font-family:inherit;transition:all .12s}
+  .copybtn:active{background:#EFF5FF}
+  .copybox{background:#F7F8FA;border:1px solid #EEF0F3;border-radius:10px;padding:13px 14px;
+           font-size:12.5px;line-height:1.75;color:#374151;white-space:pre-line}
+  .collapsed{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .copytoggle{font-size:12px;color:#6B7280;margin-top:8px;cursor:pointer;display:inline-block;padding:2px 0}
+
+  .steps{font-size:13px;color:#4B5563;line-height:1.9}
+  .steps div{display:flex;gap:9px}
+  .steps b{color:#9CA3AF;font-weight:600;width:13px;flex:none}
+  .bullets{font-size:13.5px;color:#4B5563;line-height:1.85}
+  .bullets div{display:flex;gap:9px}
+  .bullets b{color:#C4C9D1;font-weight:600;flex:none}
+
+  .more{margin:24px 20px 8px;border-top:1px solid #F3F4F6;padding-top:14px;font-size:13px;
+        color:#6B7280;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+  .more .ar{transition:transform .2s;color:#C4C9D1;font-size:12px}
+  .more.open .ar{transform:rotate(180deg)}
+  .why{display:none;margin:0 20px;padding:14px 16px;background:#FAFBFC;border-radius:10px;
+       font-size:12px;line-height:1.95;color:#6B7280}
+  .why.on{display:block}
+  .why .row{display:flex;gap:10px}
+  .why .row b{color:#374151;font-weight:600;flex:none;width:58px;text-align:right}
+  .why .ft{margin-top:10px;padding-top:10px;border-top:1px solid #EEF0F3;color:#9CA3AF;font-size:11.5px}
+
+  .dock{flex:none;padding:14px 20px calc(env(safe-area-inset-bottom) + 18px);background:#fff;
+        border-top:1px solid #F1F2F4;box-shadow:0 -6px 16px -12px rgba(17,24,39,.18)}
+
+  /* ---------- E1 ---------- */
+  .err{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+       padding:0 44px;text-align:center}
+  .err .ic{width:60px;height:60px;border-radius:50%;background:#F3F4F6;display:flex;
+           align-items:center;justify-content:center;font-size:24px;color:#9CA3AF;font-weight:700}
+  .err h3{font-size:21px;font-weight:700;margin-top:22px;letter-spacing:-.3px}
+  .err p{font-size:13.5px;color:#6B7280;margin-top:10px;line-height:1.6}
+  .tips{margin-top:28px;text-align:left;width:100%}
+  .tips div{font-size:13.5px;color:#374151;padding:11px 0;border-bottom:1px solid #F3F4F6;display:flex;gap:10px}
+  .tips div:last-child{border:none}
+  .tips span{color:#9CA3AF;font-size:11px;padding-top:2px}
+
+  /* ---------- toast ---------- */
+  .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 100px);
+         transform:translate(-50%,10px);background:rgba(17,24,39,.92);color:#fff;font-size:13px;
+         padding:9px 18px;border-radius:20px;opacity:0;pointer-events:none;transition:all .22s;
+         z-index:50;white-space:nowrap;max-width:80vw;overflow:hidden;text-overflow:ellipsis}
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+
+  /* 桌面端：居中成一个卡片，避免横向拉满 */
+  @media (min-width:560px){
+    body{background:#E9ECF1;display:flex;align-items:center;justify-content:center}
+    #app{width:390px;height:844px;max-height:100vh;background:#fff;border-radius:28px;
+         box-shadow:0 20px 48px -12px rgba(17,24,39,.24);overflow:hidden}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ================= S0 ================= -->
+  <div class="view on" id="v-s0">
+    <div class="topbar">
+      <div class="t">该留该走</div>
+      <div class="r" id="recBtn" style="display:none">记录</div>
+    </div>
+    <div class="scroll">
+      <div class="hero">
+        <h2>这件东西，<br>留着还是送走？</h2>
+        <p>拍一张照片，30 秒告诉你<br>该留、该卖、该捐，还是该扔。</p>
+      </div>
+      <div class="cta"><button class="btn" id="pickBtn">拍一张照片</button></div>
+      <div class="micro">照片只用于本次识别，不留存</div>
+
+      <div id="recBlock" style="display:none">
+        <div class="recsep"></div>
+        <div class="rec"><div class="h">最近</div><div id="recList"></div></div>
+      </div>
+
+      <div id="emptyBlock">
+        <div class="recsep"></div>
+        <div class="empty">
+          <div class="eh">它怎么判断</div>
+          <div class="erow"><b>01</b><span>认得出就能给建议，认不出会让你重拍，<em>不猜</em></span></div>
+          <div class="erow"><b>02</b><span>价格来自内置品类价格表，<em>不是模型编的</em></span></div>
+          <div class="erow"><b>03</b><span>记录只存在这台设备，不上传</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot">参考价格为区间，非报价，最终以实际成交为准。</div>
+  </div>
+
+  <!-- ================= S1 ================= -->
+  <div class="view" id="v-s1">
+    <div class="loading">
+      <div class="pic ph" id="s1pic">照片</div>
+      <div class="txt" id="s1txt">正在识别品类…</div>
+      <div class="dots" id="s1dots"><i class="on"></i><i></i><i></i></div>
+      <div class="slowhint" id="slowHint"></div>
+      <div class="cancel" id="s1cancel">取消</div>
+    </div>
+  </div>
+
+  <!-- ================= E1 ================= -->
+  <div class="view" id="v-e1">
+    <div class="err">
+      <div class="ic" id="e1ic">?</div>
+      <h3 id="e1title">没认出来</h3>
+      <p id="e1desc">可能是角度太偏，<br>或者光线太暗。</p>
+      <div class="tips" id="e1tips">
+        <div><span>01</span>对准一个物品，别拍一堆</div>
+        <div><span>02</span>背景尽量干净</div>
+        <div><span>03</span>光线亮一点</div>
+      </div>
+    </div>
+    <div class="dock"><button class="btn" data-go="s0">重新拍</button></div>
+  </div>
+
+  <!-- ================= S2 ================= -->
+  <div class="view" id="v-s2">
+    <div class="rback" data-go="s0"><span>‹</span><span>再拍一张</span></div>
+    <div class="scroll" id="s2scroll"></div>
+    <div class="dock"><button class="btn-ghost" data-go="s0">再拍一张</button></div>
+  </div>
+
+  <div class="toast" id="toast">已复制</div>
+</div>
+
+<input type="file" id="fileInput" accept="image/*" style="display:none">
+
+<script>
+/* ============================================================
+ * 配置
+ * ============================================================ */
+const API_BASE = (window.__API_BASE__ || '').replace(/\/$/, '');
+const API_URL = API_BASE ? API_BASE + '/api/analyze' : '/api/analyze';
+
+/* 图片压缩参数（规格 5.1）：长边 1280 / 质量 0.8 / 目标 ≤300KB */
+const MAX_EDGE = 1280;
+const QUALITY = 0.8;
+const MAX_BYTES = 8 * 1024 * 1024;   // 服务端上限
+const MIN_BYTES = 2048;               // 服务端下限
+const SLOW_MS = 8000;                 // 超过这个时间显示"再等等"
+
+/* ============================================================
+ * 状态
+ * ============================================================ */
+const state = {
+  view: 's0',
+  userImg: null,     // 当前图片的 dataUrl
+  result: null,      // 当前结果
+  records: [],       // 历史（localStorage）
+  abort: null,       // AbortController
+  timers: [],
+  whyOpen: false,
+  copyOpen: false,
+  editing: null,            // 当前正在编辑的字段：name / material
+  currentRecordTs: null     // 当前结果对应的记录时间戳，用于回写修改
+};
+
+const $ = s => document.querySelector(s);
+const VIEWS = { s0:'v-s0', s1:'v-s1', e1:'v-e1', s2:'v-s2' };
+
+/* ============================================================
+ * 视图切换
+ * ============================================================ */
+function go(key){
+  state.view = key;
+  Object.entries(VIEWS).forEach(([k, id]) => {
+    $('#' + id).classList.toggle('on', k === key);
+  });
+  // 切视图后回到顶部，避免上一屏的滚动位置残留
+  const sc = $('#' + VIEWS[key]).querySelector('.scroll');
+  if (sc) sc.scrollTop = 0;
+}
+
+/* ============================================================
+ * 记录（localStorage）
+ * ============================================================ */
+const REC_KEY = 'gailiu_records_v1';
+const REC_MAX = 20;
+
+function loadRecords(){
+  try {
+    const raw = localStorage.getItem(REC_KEY);
+    state.records = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(state.records)) state.records = [];
+  } catch { state.records = [] }
+  renderRecords();
+}
+
+function saveRecords(){
+  try {
+    // 存储配额有限：缩略图已经是压缩后的，仍然做一次保护
+    while (state.records.length > REC_MAX) state.records.pop();
+    localStorage.setItem(REC_KEY, JSON.stringify(state.records));
+  } catch (e) {
+    // 超配额：丢掉最旧的一半重试
+    try {
+      state.records = state.records.slice(0, Math.floor(REC_MAX / 2));
+      localStorage.setItem(REC_KEY, JSON.stringify(state.records));
+    } catch { /* 放弃存储，不影响主流程 */ }
+  }
+  renderRecords();
+}
+
+function pushRecord(result, imgDataUrl){
+  const ts = Date.now();
+  state.records.unshift({
+    ts,
+    thumb: imgDataUrl,
+    result
+  });
+  state.currentRecordTs = ts;   // 让后续的名称/材质修改能回写到这条记录
+  saveRecords();
+}
+
+const VERDICT_TEXT = { keep:'建议留着', sell:'建议卖掉', donate:'建议捐掉', recycle:'建议回收' };
+const VERDICT_COLOR = { keep:'#6B7280', sell:'#0E9F6E', donate:'#2563EB', recycle:'#B45309' };
+
+function renderRecords(){
+  const has = state.records.length > 0;
+  $('#recBlock').style.display = has ? 'block' : 'none';
+  $('#emptyBlock').style.display = has ? 'none' : 'block';
+  $('#recBtn').style.display = has ? 'block' : 'none';
+  if (!has) return;
+
+  $('#recList').innerHTML = state.records.map((r, i) => {
+    const v = r.result.verdict;
+    return `<div class="recrow" data-rec="${i}">
+      <div class="thumb"><img src="${r.thumb}" alt=""></div>
+      <div class="nm">${esc(r.result.category ? r.result.category.name : '未识别')}</div>
+      <div class="tg" style="color:${VERDICT_COLOR[v] || '#6B7280'}">${VERDICT_TEXT[v] || ''}</div>
+      <div class="ar">›</div>
+    </div>`;
+  }).join('');
+
+  document.querySelectorAll('[data-rec]').forEach(el => {
+    el.onclick = () => {
+      const r = state.records[+el.dataset.rec];
+      state.userImg = r.thumb;
+      state.result = r.result;
+      state.currentRecordTs = r.ts;   // 回看历史时，编辑也要写回正确的那一条
+      state.editing = null;
+      renderResult(r.result);
+      go('s2');
+    };
+  });
+}
+
+/* ============================================================
+ * 图片：读取 + EXIF 方向纠正 + 压缩
+ * ------------------------------------------------------------
+ * 移动端竖拍照片带 EXIF Orientation，直接画到 canvas 会横过来，
+ * 这是这类产品最常见的翻车点，必须处理。
+ * ============================================================ */
+
+/** 从 JPEG 的 APP1 段读 Orientation（1-8），读不到返回 1 */
+function readOrientation(buf){
+  const view = new DataView(buf);
+  if (view.getUint16(0, false) !== 0xFFD8) return 1;   // 不是 JPEG
+  let off = 2;
+  const len = view.byteLength;
+  while (off < len - 1) {
+    if (view.getUint8(off) !== 0xFF) { off++; continue }
+    const marker = view.getUint8(off + 1);
+    if (marker === 0xD8 || marker === 0x01 || (marker >= 0xD0 && marker <= 0xD7)) { off += 2; continue }
+    const size = view.getUint16(off + 2, false);
+    if (marker === 0xE1) {
+      // APP1: "Exif\0\0"
+      if (view.getUint32(off + 4, false) === 0x45786966) {
+        const tiff = off + 10;
+        const little = view.getUint16(tiff, false) === 0x4949;
+        const ifdOff = view.getUint32(tiff + 4, little);
+        const entries = view.getUint16(tiff + ifdOff, little);
+        for (let i = 0; i < entries; i++) {
+          const entry = tiff + ifdOff + 2 + i * 12;
+          if (view.getUint16(entry, little) === 0x0112) {
+            return view.getUint16(entry + 8, little) || 1;
+          }
+        }
+      }
+      return 1;
+    }
+    off += 2 + size;
+  }
+  return 1;
+}
+
+/** 按 orientation 把图片画正，并压缩到 MAX_EDGE */
+function drawAndCompress(img, orientation){
+  let w = img.naturalWidth || img.width;
+  let h = img.naturalHeight || img.height;
+
+  // 5-8 表示需要交换宽高
+  const swap = orientation >= 5 && orientation <= 8;
+  const srcW = swap ? h : w;
+  const srcH = swap ? w : h;
+
+  const scale = Math.min(1, MAX_EDGE / Math.max(srcW, srcH));
+  const outW = Math.max(1, Math.round(srcW * scale));
+  const outH = Math.max(1, Math.round(srcH * scale));
+
+  const cv = document.createElement('canvas');
+  cv.width = outW; cv.height = outH;
+  const g = cv.getContext('2d');
+
+  g.save();
+  switch (orientation) {
+    case 2: g.transform(-1, 0, 0, 1, outW, 0); break;
+    case 3: g.transform(-1, 0, 0, -1, outW, outH); break;
+    case 4: g.transform(1, 0, 0, -1, 0, outH); break;
+    case 5: g.transform(0, 1, 1, 0, 0, 0); break;
+    case 6: g.transform(0, 1, -1, 0, outW, 0); break;
+    case 7: g.transform(0, -1, -1, 0, outW, outH); break;
+    case 8: g.transform(0, -1, 1, 0, 0, outH); break;
+  }
+  g.drawImage(img, 0, 0, w, h, 0, 0, outW, outH);
+  g.restore();
+
+  return cv.toDataURL('image/jpeg', QUALITY);
+}
+
+function fileToDataUrl(file){
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result);
+    fr.onerror = () => reject(new Error('读取失败'));
+    fr.readAsDataURL(file);
+  });
+}
+
+async function prepareImage(file){
+  // 1. 体积预检（服务端也会查，但前端先拦能省一次往返）
+  if (file.size > MAX_BYTES) {
+    throw Object.assign(new Error('图片太大'), { code: 'IMAGE_TOO_LARGE' });
+  }
+
+  // 2. 读 orientation（只有 JPEG 有）
+  let orientation = 1;
+  try {
+    const head = await file.slice(0, 128 * 1024).arrayBuffer();
+    orientation = readOrientation(head);
+  } catch { orientation = 1 }
+
+  // 3. 解码
+  const raw = await fileToDataUrl(file);
+  const img = await new Promise((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => reject(new Error('解码失败'));
+    im.src = raw;
+  });
+
+  // 4. 画正 + 压缩
+  const dataUrl = drawAndCompress(img, orientation);
+
+  // 5. 压缩后体积下限检查
+  const bytes = Math.round((dataUrl.length - dataUrl.indexOf(',') - 1) * 3 / 4);
+  if (bytes < MIN_BYTES) {
+    throw Object.assign(new Error('图片太小'), { code: 'IMAGE_TOO_SMALL' });
+  }
+
+  return { dataUrl, bytes };
+}
+
+/* ============================================================
+ * 调用接口
+ * ============================================================ */
+async function analyze(dataUrl){
+  const ctrl = new AbortController();
+  state.abort = ctrl;
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageBase64: dataUrl }),
+    signal: ctrl.signal
+  });
+
+  let payload = null;
+  try { payload = await res.json() } catch { payload = null }
+
+  if (!res.ok) {
+    const code = (payload && payload.code) || 'INTERNAL';
+    const msg  = (payload && payload.message) || '这次没成功，重试一下';
+    throw Object.assign(new Error(msg), { code, status: res.status });
+  }
+  if (!payload || payload.ok !== true) {
+    throw Object.assign(new Error('返回格式不对'), { code: 'INTERNAL' });
+  }
+  return payload;
+}
+
+/* ============================================================
+ * 主流程
+ * ============================================================ */
+$('#pickBtn').onclick = () => $('#fileInput').click();
+
+$('#fileInput').onchange = async e => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';               // 允许连拍同一张
+  if (!file) return;
+
+  // ---- 前端预检 ----
+  let prepared;
+  try {
+    prepared = await prepareImage(file);
+  } catch (err) {
+    showError(err.code || 'IMAGE_INVALID_FORMAT');
+    return;
+  }
+
+  state.userImg = prepared.dataUrl;
+  state.result = null;
+  state.whyOpen = false;
+  state.copyOpen = false;
+  state.editing = null;
+
+  // ---- 进 S1 ----
+  go('s1');
+  startLoading(prepared.dataUrl);
+
+  // ---- 调接口 ----
+  try {
+    const payload = await analyze(prepared.dataUrl);
+    stopLoading();
+
+    if (payload.verdict === 'unknown') {
+      showError('UNKNOWN', payload.reason);
+      return;
+    }
+
+    state.result = payload;
+    renderResult(payload);
+    pushRecord(payload, prepared.dataUrl);
+    go('s2');
+
+  } catch (err) {
+    stopLoading();
+    if (err.name === 'AbortError') { go('s0'); return }
+    showError(err.code || 'INTERNAL', err.message);
+  } finally {
+    state.abort = null;
+  }
+};
+
+/* ---------- 加载动画：按真实阶段推进 ----------
+ * 接口是一次性返回的，没法拿到真实阶段。
+ * 所以用"按时间推进 + 到达上限就停在最后一句"的方式，
+ * 不会假装已经在写文案却卡住不动。 */
+function startLoading(img){
+  $('#s1pic').className = 'pic';
+  $('#s1pic').innerHTML = `<img src="${img}" alt="">`;
+  $('#s1txt').textContent = '正在识别品类…';
+  $('#slowHint').textContent = '';
+  const dots = document.querySelectorAll('#s1dots i');
+  dots.forEach((d, i) => d.classList.toggle('on', i === 0));
+
+  clearTimers();
+  state.timers.push(setTimeout(() => {
+    $('#s1txt').textContent = '正在判断处置方式…';
+    dots.forEach((d, i) => d.classList.toggle('on', i <= 1));
+  }, 1100));
+  state.timers.push(setTimeout(() => {
+    $('#s1txt').textContent = '正在写发布文案…';
+    dots.forEach(d => d.classList.add('on'));
+  }, 2400));
+  state.timers.push(setTimeout(() => {
+    $('#slowHint').textContent = '比平时慢一点，再等等…';
+  }, SLOW_MS));
+}
+
+function stopLoading(){ clearTimers() }
+
+function clearTimers(){
+  state.timers.forEach(clearTimeout);
+  state.timers = [];
+}
+
+$('#s1cancel').onclick = () => {
+  if (state.abort) state.abort.abort();
+  stopLoading();
+  go('s0');
+};
+
+/* ---------- 错误页 ---------- */
+const ERROR_UI = {
+  UNKNOWN: {
+    ic: '?', title: '没认出来',
+    desc: '可能是角度太偏，<br>或者光线太暗。',
+    tips: true
+  },
+  IMAGE_TOO_LARGE: { ic: '!', title: '这张图有点大', desc: '换一张，或者先用截图再传。', tips: false },
+  IMAGE_TOO_SMALL: { ic: '!', title: '图片太小了', desc: '拍清楚一点，让物品占满画面。', tips: true },
+  IMAGE_INVALID_FORMAT: { ic: '!', title: '这个格式不支持', desc: '支持 JPG、PNG 的照片。', tips: false },
+  NO_IMAGE: { ic: '!', title: '没有收到照片', desc: '请重新选一张。', tips: false },
+  TIMEOUT: { ic: '!', title: '这次没成功', desc: '网络好像不太稳定，重试一下。', tips: false },
+  VISION_FAILED: { ic: '!', title: '这次没成功', desc: '重试一下就好。', tips: false },
+  TEXT_FAILED: { ic: '!', title: '这次没成功', desc: '重试一下就好。', tips: false },
+  CONFIG_MISSING: { ic: '!', title: '服务暂时不可用', desc: '请稍后再试。', tips: false },
+  INTERNAL: { ic: '!', title: '出了点问题', desc: '稍后再试一次。', tips: false }
+};
+
+function showError(code, message){
+  const ui = ERROR_UI[code] || ERROR_UI.INTERNAL;
+  $('#e1ic').textContent = ui.ic;
+  $('#e1title').textContent = ui.title;
+  $('#e1desc').innerHTML = code === 'UNKNOWN' && message
+    ? esc(message) : ui.desc;
+  $('#e1tips').style.display = ui.tips ? 'block' : 'none';
+  go('e1');
+}
+
+/* ============================================================
+ * 渲染结果页
+ * ============================================================ */
+const VERDICT_META = {
+  keep:    { title: '建议先留着', cls: 'keep' },
+  sell:    { title: '建议卖掉',   cls: 'sell' },
+  donate:  { title: '建议捐掉',   cls: 'donate' },
+  recycle: { title: '建议专业回收', cls: 'recycle' }
+};
+
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* 铅笔图标 */
+const PEN_SVG = '<svg class="pen" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M11.5 2.5l2 2L6 12l-3 .8.8-3 7.7-7.3z"/></svg>';
+
+/**
+ * 可编辑字段
+ * - 有值：显示值 + 铅笔，点击进入编辑
+ * - 无值：显示灰色占位 "未识别"，点击补填
+ */
+function editableField(kind, value){
+  const has = value && String(value).trim();
+  const inner = has
+    ? esc(value)
+    : `<span class="empty-txt">未识别 · 点击补充</span>`;
+  return `<span class="editable${has ? '' : ' empty'}" data-edit="${kind}" role="button" tabindex="0">${inner}${PEN_SVG}</span>`;
+}
+
+/**
+ * 进入编辑态：把 editable 换成 input
+ * 用原生 prompt 会打断节奏，这里做成行内输入
+ */
+function startEdit(kind){
+  if (state.editing) return;
+  state.editing = kind;
+
+  const el = document.querySelector(`[data-edit="${kind}"]`);
+  if (!el) return;
+
+  const current = kind === 'name'
+    ? (state.result && state.result.category ? state.result.category.name : '')
+    : (state.result ? state.result.material : '');
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = current || '';
+  input.maxLength = kind === 'name' ? 24 : 16;
+  input.className = 'inline-input';
+  input.setAttribute('inputmode', 'text');
+  input.style.cssText = `
+    font-family:inherit;font-size:${kind === 'name' ? 17 : 15}px;
+    font-weight:${kind === 'name' ? 700 : 500};
+    border:none;border-bottom:2px solid #1F6FEB;outline:none;
+    background:transparent;color:#111827;width:${kind === 'name' ? 170 : 110}px;
+    padding:0 0 2px 0;letter-spacing:-.2px;
+  `;
+
+  el.replaceWith(input);
+  input.focus();
+  try { input.setSelectionRange(input.value.length, input.value.length) } catch {}
+
+  const commit = save => {
+    if (state.editing !== kind) return;
+    state.editing = null;
+    const val = save ? input.value.trim().slice(0, input.maxLength) : current;
+    applyEdit(kind, val);
+  };
+
+  input.onblur = () => commit(true);
+  input.onkeydown = e => {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur() }
+    else if (e.key === 'Escape') { e.preventDefault(); commit(false) }
+  };
+}
+
+/** 把用户的修改写回结果 */
+async function applyEdit(kind, value){
+  const r = state.result;
+  if (!r) return;
+
+  if (kind === 'name') {
+    const newName = (value || '').trim();
+    const oldName = r.category ? r.category.name : '';
+    r.category = r.category || { id: null, name: '', group: null };
+    r.category.name = newName || null;
+    r.meta = r.meta || {};
+    r.meta.userEditedName = true;
+    persistCurrentResult();
+    renderResult(r);
+
+    /* 名字改了 → 按新名字重新查价 */
+    if (newName && newName !== oldName) {
+      await recategorize(newName);
+    }
+    return;
+  }
+
+  r.material = value || '';
+  r.meta = r.meta || {};
+  r.meta.userEditedMaterial = true;
+  persistCurrentResult();
+  renderResult(r);
+}
+
+/* ============================================================
+ * 改名后重新查价
+ * ------------------------------------------------------------
+ * 只传名字给服务端，不传图片 —— 重新匹配靠规则表字符串匹配，
+ * 不再调一次模型（慢，且可能给出不一致的答案）。
+ * ============================================================ */
+let recatSeq = 0;
+
+async function recategorize(name){
+  const seq = ++recatSeq;
+  const r = state.result;
+  if (!r) return;
+
+  showRecatBanner('正在按新名字查价…', 'pending');
+
+  try {
+    const res = await fetch(API_BASE + '/api/recategorize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        condition: r.condition,
+        hasWarranty: Boolean(r.meta && r.meta.hasWarranty)
+      })
+    });
+
+    if (seq !== recatSeq) return;      // 期间又改了一次，丢弃这次结果
+
+    let j = null;
+    try { j = await res.json() } catch { j = null }
+
+    if (!res.ok || !j || j.ok !== true) {
+      showRecatBanner('这次没查上，价格先按原来的', 'warn');
+      return;
+    }
+
+    if (!j.matched) {
+      const sug = Array.isArray(j.suggestions) && j.suggestions.length
+        ? `　试试：${j.suggestions.slice(0, 4).join(' / ')}`
+        : '';
+      showRecatBanner(`${j.message}${sug}`, 'warn');
+      return;
+    }
+
+    /* 命中：整套结论按新品类替换 */
+    r.category = j.category;
+    r.condition = j.condition;
+    r.verdict = j.verdict;
+    r.price = j.price;
+    r.wide = j.wide;
+    r.damaged = j.damaged;
+    r.tip = j.tip || '';
+    r.reason = j.reason;
+    r.channels = j.channels;
+    r.copywriting = null;              // 旧文案对应的还是旧品类，必须清掉
+    r.meta = r.meta || {};
+    r.meta.recategorizedTo = j.category.name;
+    r.meta.recategorizedVia = j.via;
+
+    persistCurrentResult();
+    renderResult(r);
+    showRecatBanner(`已按「${j.category.name}」重新查价`, 'ok');
+
+  } catch (e) {
+    if (seq === recatSeq) showRecatBanner('网络问题，价格先按原来的', 'warn');
+  }
+}
+
+/* ============================================================
+ * 切换品牌档位 → 重新查价
+ * ------------------------------------------------------------
+ * 和改名重查走同一个接口（/api/recategorize），
+ * 只是多传一个 brandTier。仍然不调模型。
+ * ============================================================ */
+async function changeBrandTier(tier){
+  const r = state.result;
+  if (!r || !r.category || !r.category.name) return;
+
+  const seq = ++recatSeq;
+  showRecatBanner('正在按新档位重新算价…', 'pending');
+
+  try {
+    const res = await fetch(API_BASE + '/api/recategorize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: r.category.name,
+        condition: r.condition,
+        hasWarranty: Boolean(r.meta && r.meta.hasWarranty),
+        brandTier: tier
+      })
+    });
+
+    if (seq !== recatSeq) return;
+
+    let j = null;
+    try { j = await res.json() } catch { j = null }
+
+    if (!res.ok || !j || j.ok !== true || !j.matched) {
+      showRecatBanner('这次没算上，价格先按原来的', 'warn');
+      return;
+    }
+
+    r.price = j.price;
+    r.verdict = j.verdict;
+    r.wide = j.wide;
+    r.damaged = j.damaged;
+    r.tip = j.tip || '';
+    r.reason = j.reason;
+    r.channels = j.channels;
+    r.brand = j.brand;
+    r.meta = r.meta || {};
+    r.meta.brandTierUserSet = tier;
+
+    persistCurrentResult();
+    renderResult(r);
+    showRecatBanner(`已按「${tier === 'generic' ? '无品牌' : tier === 'brand' ? '有牌子' : '高端牌子'}」重新算价`, 'ok');
+
+  } catch (e) {
+    if (seq === recatSeq) showRecatBanner('网络问题，价格先按原来的', 'warn');
+  }
+}
+
+let bannerTimer = null;
+function showRecatBanner(msg, kind){
+  const el = $('#recatBanner');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'recat-banner on ' + (kind || '');
+  clearTimeout(bannerTimer);
+  if (kind !== 'pending') {
+    bannerTimer = setTimeout(() => { el.className = 'recat-banner' }, 3600);
+  }
+}
+
+/** 修改后同步更新记录里的那一条 */
+function persistCurrentResult(){
+  if (!state.currentRecordTs) return;
+  const i = state.records.findIndex(x => x.ts === state.currentRecordTs);
+  if (i >= 0) {
+    state.records[i].result = state.result;
+    saveRecords();
+  }
+}
+
+function renderResult(r){
+  const meta = VERDICT_META[r.verdict] || VERDICT_META.donate;
+  const catName = r.category ? r.category.name : '';
+  const material = r.material || '';
+  const thumb = state.userImg
+    ? `<img src="${state.userImg}" alt="">`
+    : `照片`;
+
+  let html = '';
+
+  /* 品牌档位选择器
+   * 只在「价格受品牌影响」时才出现 —— 图书、被褥这类不显示，
+   * 避免用户以为改品牌能影响每一件东西。 */
+  let tierHtml = '';
+  const brand = r.brand || {};
+  if (brand.applied) {
+    const cur = brand.tier || 'brand';
+    const opts = [
+      ['generic', '无品牌', '×0.6'],
+      ['brand', '有牌子', '×1.0'],
+      ['premium', '高端牌子', brand.factor > 1 ? '×' + brand.factor : '溢价']
+    ];
+    const tierNote = brand.unknown
+      ? '没看到明确的品牌标识，按普通品牌价估。如果实际是名牌，点上面的档位改一下。'
+      : `按「${cur === 'generic' ? '无品牌' : cur === 'brand' ? '普通品牌' : '高端品牌'}」估价${brand.capped ? '（已限制在上限内）' : ''}，改档位会重新算价格。`;
+    tierHtml = `<div class="tierWrap">
+      <div class="tierLabel">品牌档位
+        <span class="q" title="看到品牌 logo 才改这里。改完价格会重新算。">?</span>
+      </div>
+      <div class="tiers">${opts.map(([k, label, sub]) =>
+        `<div class="tier${cur === k ? ' on' : ''}" data-tier="${k}">${label}<span class="sub">${sub}</span></div>`
+      ).join('')}</div>
+      <div class="tierNote">${tierNote}</div>
+    </div>`;
+  }
+
+  /* 事实层：名称与材质可编辑，成色只读 */
+  const factsLine = [];
+  if (r.condition) factsLine.push(`<span style="color:#374151">${esc(r.condition)}</span>`);
+
+  html += `<div class="fact">
+    <div class="thumb ph">${thumb}</div>
+    <div style="flex:1;min-width:0">
+      <div class="k">这件是</div>
+      <div class="v">
+        ${editableField('name', catName)}
+        ${material || !catName ? `<span style="color:#D1D5DB;font-weight:400;margin:0 2px">·</span>` : ''}
+        ${editableField('material', material)}
+      </div>
+      <div class="editHint">名称和材质可以点一下改 <b>·</b> ${esc(r.condition || '')}</div>
+      ${tierHtml}
+    </div>
+  </div>
+  <div class="recat-banner" id="recatBanner"></div>`;
+
+  /* 结论条 */
+  html += `<div class="verdict ${meta.cls}">
+    <div class="hd"><span class="dot"></span><h3>${meta.title}</h3></div>
+    <p>${esc(r.reason || '')}</p>
+  </div>`;
+
+  /* 瑕疵提示（如实告知，不隐瞒） */
+  if (r.damage) {
+    html += `<div class="warnbox">照片里看到：${esc(r.damage)}</div>`;
+  }
+
+  /* 价格 */
+  if (Array.isArray(r.price) && r.price.length === 2) {
+    html += `<div class="sec"><div class="label">参考价</div>
+      <div class="price">¥ ${r.price[0]} – ${r.price[1]}
+        <small>非报价，仅供参考。依据：内置品类价格表</small>
+      </div></div>`;
+    if (r.wide) {
+      html += `<div class="tipbox">这个品类价格跨度大，先去平台搜一下同款成色再定价更稳。</div>`;
+    }
+  }
+
+  /* 渠道 */
+  if (Array.isArray(r.channels) && r.channels.length) {
+    const label = r.verdict === 'sell' ? '去哪卖'
+                : r.verdict === 'donate' ? '去哪捐' : '送去哪';
+    html += `<div class="sec"><div class="label">${label}</div>`;
+    r.channels.forEach(c => {
+      const name = typeof c === 'string' ? c : c.name;
+      const desc = typeof c === 'string' ? '' : (c.desc || '');
+      html += `<div class="chan"><div class="cn">${esc(name)}</div>
+        ${desc ? `<div class="cd">${esc(desc)}</div>` : ''}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  /* 文案 */
+  if (r.copywriting) {
+    const open = state.copyOpen;
+    html += `<div class="sec">
+      <div class="copyhead"><div class="label">发布文案</div>
+        <button class="copybtn" id="copyBtn">复制</button></div>
+      <div class="copybox ${open ? '' : 'collapsed'}" id="copyBox">${esc(r.copywriting)}</div>
+      <span class="copytoggle" id="copyToggle">${open ? '收起' : '展开全部'}</span>
+    </div>`;
+  }
+
+  /* 判断依据 */
+  const why = buildWhy(r);
+  html += `<div class="more${state.whyOpen ? ' open' : ''}" id="whyToggle">
+    <span>为什么这么判断？</span><span class="ar">⌄</span></div>
+  <div class="why${state.whyOpen ? ' on' : ''}" id="whyBox">${why}</div>
+  <div style="height:20px"></div>`;
+
+  $('#s2scroll').innerHTML = html;
+  bindResult(r);
+}
+
+function buildWhy(r){
+  const rows = [];
+  const editedName = r.meta && r.meta.userEditedName;
+  const editedMat = r.meta && r.meta.userEditedMaterial;
+
+  if (r.category) {
+    rows.push(['识别为', `${r.category.name}${editedName ? '（你改过）' : '（视觉模型）'}`]);
+  }
+  if (r.condition) rows.push(['成色', r.condition]);
+  if (r.material) {
+    rows.push(['材质', `${r.material}${editedMat ? '（你改过）' : '（视觉模型，仅供参考）'}`]);
+  } else {
+    rows.push(['材质', '没看清，已留空']);
+  }
+  if (Array.isArray(r.price)) {
+    rows.push(['价格', `品类价格表「${r.category ? r.category.name : ''}」档，¥${r.price[0]}–${r.price[1]}`]);
+  } else {
+    rows.push(['价格', '该品类不走二手定价']);
+  }
+  /* 品牌档位：只有影响价格时才说明 */
+  if (r.brand && r.brand.applied) {
+    const tierName = r.brand.tier === 'generic' ? '无品牌' : r.brand.tier === 'brand' ? '有牌子' : '高端牌子';
+    rows.push(['品牌', `${tierName}，系数 ×${r.brand.factor}${r.brand.unknown ? '（未识别到品牌标识，按保守档估）' : ''}`]);
+  }
+  if (Array.isArray(r.channels) && r.channels.length) {
+    rows.push(['渠道', `按品类「${r.category ? r.category.group : ''}」匹配`]);
+  }
+  if (r.meta && r.meta.visionMs) {
+    rows.push(['耗时', `识别 ${r.meta.visionMs}ms${r.meta.writerMs ? ' · 文案 ' + r.meta.writerMs + 'ms' : ''}`]);
+  }
+
+  let h = rows.map(([k, v]) => `<div class="row"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('');
+
+  if (r.meta && r.meta.recategorizedTo) {
+    h += `<div class="ft" style="color:#177A55">你改过品类名，价格已按「${esc(r.meta.recategorizedTo)}」重新查表。文案需要重新拍一次才会更新。</div>`;
+  } else if (editedName || editedMat) {
+    h += `<div class="ft" style="color:#8A6A16">名称或材质是你改过的。</div>`;
+  }
+  h += `<div class="ft">价格和渠道来自内置规则表，没有交给模型生成。这次没有用到你的历史记录，照片也没有留存。</div>`;
+  return h;
+}
+
+function bindResult(r){
+  /* 可编辑字段 */
+  document.querySelectorAll('[data-edit]').forEach(el => {
+    const kind = el.dataset.edit;
+    el.onclick = e => { e.stopPropagation(); startEdit(kind) };
+    el.onkeydown = e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startEdit(kind) }
+    };
+  });
+
+  /* 品牌档位切换 */
+  document.querySelectorAll('[data-tier]').forEach(el => {
+    el.onclick = e => {
+      e.stopPropagation();
+      const t = el.dataset.tier;
+      const cur = (state.result && state.result.brand && state.result.brand.tier) || 'generic';
+      if (t === cur) return;
+      changeBrandTier(t);
+    };
+  });
+
+  const copyBtn = $('#copyBtn');
+  if (copyBtn) {
+    copyBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(r.copywriting);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = r.copywriting;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy') } catch {}
+        ta.remove();
+      }
+      toast('已复制');
+    };
+  }
+
+  const toggle = $('#copyToggle');
+  if (toggle) {
+    toggle.onclick = () => {
+      state.copyOpen = !state.copyOpen;
+      const box = $('#copyBox');
+      box.classList.toggle('collapsed', !state.copyOpen);
+      toggle.textContent = state.copyOpen ? '收起' : '展开全部';
+    };
+  }
+
+  const wt = $('#whyToggle');
+  if (wt) {
+    wt.onclick = () => {
+      state.whyOpen = !state.whyOpen;
+      $('#whyBox').classList.toggle('on', state.whyOpen);
+      wt.classList.toggle('open', state.whyOpen);
+    };
+  }
+}
+
+/* ============================================================
+ * 杂项
+ * ============================================================ */
+document.querySelectorAll('[data-go]').forEach(el => {
+  el.onclick = () => go(el.dataset.go);
+});
+
+$('#recBtn').onclick = () => {
+  const el = $('#recBlock');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+let toastTimer;
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 1600);
+}
+
+/* 启动 */
+loadRecords();
+go('s0');
+
+/* 暴露给联调用 */
+window.__app = { state, go, renderResult, analyze };
+</script>
+</body>
+</html>

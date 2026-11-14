@@ -1,0 +1,36 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/analyze.js": {
+      "maxDuration": 30,
+      "memory": 1024
+    },
+    "api/recategorize.js": {
+      "maxDuration": 10,
+      "memory": 512
+    },
+    "api/health.js": {
+      "maxDuration": 10,
+      "memory": 256
+    }
+  },
+  "rewrites": [
+    { "source": "/", "destination": "/public/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    },
+    {
+      "source": "/public/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    }
+  ]
+}

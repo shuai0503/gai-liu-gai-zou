@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>该留该走 · 扫码体验</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:#F5F6F8;color:#111827;padding:40px 24px;display:flex;flex-direction:column;
+    align-items:center;gap:28px;min-height:100vh;
+  }
+  h1{font-size:20px;font-weight:800;letter-spacing:-.3px}
+  .sub{font-size:13px;color:#6B7280;text-align:center;line-height:1.7;margin-top:-16px}
+  .card{
+    background:#fff;border-radius:16px;padding:28px 32px 24px;text-align:center;
+    box-shadow:0 1px 3px rgba(0,0,0,.06),0 12px 32px -12px rgba(17,24,39,.14);
+    width:340px;
+  }
+  .card h2{font-size:15px;font-weight:700;margin-bottom:4px}
+  .card .addr{font-size:12px;color:#6B7280;margin-bottom:18px;font-family:ui-monospace,Menlo,monospace;
+              word-break:break-all;line-height:1.5}
+  .card img{width:240px;height:240px;display:block;margin:0 auto;image-rendering:pixelated}
+  .badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;margin-top:14px}
+  .ok{background:#ECFDF5;color:#0E9F6E}
+  .warn{background:#FFFBEB;color:#8A6A16}
+  .note{
+    max-width:520px;font-size:12.5px;color:#6B7280;line-height:1.9;background:#fff;
+    border-radius:12px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.05);
+  }
+  .note b{color:#111827}
+  .note code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:11.5px}
+</style>
+</head>
+<body>
+
+<h1>该留该走 · 扫码体验</h1>
+<div class="sub">手机扫码即可打开。手机需要和这台电脑在同一个 WiFi 下。</div>
+
+<div id="cards"></div>
+
+<div class="note">
+  <b>如果手机打不开，按这个顺序排查：</b><br>
+  ① 手机和电脑是否连的<b>同一个 WiFi</b>（手机用 4G/5G 是打不开的）<br>
+  ② Windows 防火墙是否拦了 <code>8899</code> 端口。放行方法：控制面板 → Windows Defender 防火墙 → 高级设置 → 入站规则 → 新建规则 → 端口 → TCP 8899 → 允许<br>
+  ③ 如果上面都不行，可以用<b>手机热点</b>：电脑连手机热点，然后用手机热点网段的 IP<br>
+  <br>
+  <b>电脑本机测试：</b>直接打开 <code>http://127.0.0.1:8899</code>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+/* 候选地址：按可用性从高到低 */
+const ADDRESSES = [
+  { label: '局域网（以太网）', url: 'http://10.85.21.60:8899', hint: '手机连公司/家里 WiFi 时用这个' },
+  { label: '局域网（热点网段）', url: 'http://192.168.137.1:8899', hint: '电脑连手机热点时用这个' },
+  { label: '本机', url: 'http://127.0.0.1:8899', hint: '只能在这台电脑上看' }
+];
+
+const wrap = document.getElementById('cards');
+
+if (typeof QRCode === 'undefined') {
+  ADDRESSES.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.innerHTML = `<h2>${a.label}</h2>
+      <div class="addr">${a.url}</div>
+      <div style="font-size:13px;color:#9B3D33">二维码库没加载出来，请直接把上面的地址手动输入手机浏览器</div>
+      <div class="badge warn">手动输入</div>`;
+    wrap.appendChild(el);
+  });
+} else {
+  ADDRESSES.forEach((a, i) => {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.innerHTML = `<h2>${a.label}</h2>
+      <div class="addr">${a.url}</div>
+      <div id="qr${i}"></div>
+      <div class="badge ${i === 0 ? 'ok' : 'warn'}">${a.hint}</div>`;
+    wrap.appendChild(el);
+
+    new QRCode(document.getElementById('qr' + i), {
+      text: a.url,
+      width: 240,
+      height: 240,
+      colorDark: '#111827',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  });
+}
+</script>
+</body>
+</html>
